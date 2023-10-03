@@ -1,4 +1,4 @@
-package taxibooking;
+package taxibooking.model;
 
 public class User {
     private int userId;

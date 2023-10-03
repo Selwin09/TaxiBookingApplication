@@ -1,4 +1,4 @@
-package taxibooking;
+package taxibooking.model;
 
 import java.time.LocalDateTime;
 
@@ -8,13 +8,17 @@ public class Booking {
     private Taxi taxi;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String pickupLocation;
+    private String destination;
 
-    public Booking(int bookingId, User user, Taxi taxi, LocalDateTime startTime, LocalDateTime endTime) {
+    public Booking(int bookingId, User user, Taxi taxi, LocalDateTime startTime, LocalDateTime endTime, String pickupLocation, String destination) {
         this.bookingId = bookingId;
         this.user = user;
         this.taxi = taxi;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.pickupLocation = pickupLocation;
+        this.destination = destination;
     }
 
 
@@ -36,5 +40,13 @@ public class Booking {
 
     public LocalDateTime getEndTime() {
         return endTime;
+    }
+    
+    public String getPickupLocation() {
+        return pickupLocation;
+    }
+    
+    public String getDestination() {
+    	return destination;
     }
 }

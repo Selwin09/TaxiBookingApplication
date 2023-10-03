@@ -1,10 +1,11 @@
-package taxibooking;
+package taxibooking.model;
 
 public class Taxi {
     private int taxiId;
     private boolean available;
 
-    public Taxi(int taxiId, boolean available) {
+
+    public Taxi(int taxiId, boolean available, String location) {
         this.taxiId = taxiId;
         this.available = available;
     }
@@ -24,5 +25,7 @@ public class Taxi {
     public void setAvailable(boolean available) {
         this.available = available;
     }
+    
+    
 }
 

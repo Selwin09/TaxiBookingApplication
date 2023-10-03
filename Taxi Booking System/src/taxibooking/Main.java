@@ -9,12 +9,35 @@
 
 package taxibooking;
 
+//import java.io.Console;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import taxibooking.controller.TaxiController;
+import taxibooking.model.Taxi;
+import taxibooking.view.Admin;
+import taxibooking.view.Customer;
 
 public class Main {
+    private ConfigManager configManager = new ConfigManager();
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+
+	
     public static void main(String[] args) {
+        try {
+			LogManager.getLogManager().readConfiguration(Main.class.getResourceAsStream("/logging.properties"));
+		} catch (IOException exception) {
+            System.err.println("Error occurred while configuring logger.");
+		}
+    	
+    	
         Scanner scanner = new Scanner(System.in);
         Customer customer = new Customer();
         Admin admin = new Admin();
@@ -36,7 +59,7 @@ public class Main {
 				try {
 					customer.login();
 				} catch (SQLException exception) {
-					exception.printStackTrace();
+					System.err.println("Error occured");
 				}
                     if (customer.getCurrentUser() != null) {
                         handleCustomerMenu(customer);
@@ -46,7 +69,7 @@ public class Main {
                     adminLogin(scanner, admin);
                     break;
                 case 3:
-                    System.out.println("Thank you for using our Taxi Booking System!");
+                    System.out.println("Thank you for using our Taxi Booking System :)");
                     isRunning = false;
                     break;
                 default:
@@ -59,37 +82,46 @@ public class Main {
     }
     
     private static void addInitialTaxis() {
-        TaxiDAO taxiDAO = new TaxiDAO();
+    	TaxiController taxiController = new TaxiController();
     
-    try {
-        List<Taxi> existingTaxis = taxiDAO.getAllTaxis();
-        if (existingTaxis.size() >= 10) {
-            //System.out.println("Taxis are already added to the database.");
-            return;
-        }
-    } catch (SQLException exception) {
-        exception.printStackTrace();
-        return;
-    }
+    List<Taxi> existingTaxis = taxiController.getAllTaxis();
+	if (existingTaxis.size() >= 10) {
+	    return;
+	}
 
         for (int i = 1; i <= 10; i++) {
-            Taxi taxi = new Taxi(i, true); 
-            try {
-                taxiDAO.addTaxi(taxi);
-            } catch (SQLException exception) {
-                exception.printStackTrace();
-            }
+            Taxi taxi = new Taxi(i, true, null); 
+            taxiController.addTaxi(taxi);
         }
     }
 
     private static void adminLogin(Scanner scanner, Admin admin) {
-        System.out.print("Enter Admin Password: ");
+    	Properties configProperties = loadConfigProperties();
+        if (configProperties == null) {
+            System.out.println("Error loading configuration.");
+            return;
+        }
+
+        String expectedAdminPassword = configProperties.getProperty("admin.password");
+    	
+    	System.out.print("Enter Admin Password: ");
         String password = scanner.next();
 
-        if (password.equals("adminpass")) { 
+        if (password.equals(expectedAdminPassword)) { 
             handleAdminMenu(admin);
         } else {
-            System.out.println("Incorrect Admin Password. Please try again.");
+            logger.log(Level.SEVERE,"Incorrect Admin Password. Please try again.");
+        }
+    }
+    
+    private static Properties loadConfigProperties() {
+        Properties configProperties = new Properties();
+        try (InputStream inputStream = Main.class.getResourceAsStream("/config.properties")) {
+            configProperties.load(inputStream);
+            return configProperties;
+        } catch (IOException exception) {
+            System.out.println("Error loading configuration.");
+            return null;
         }
     }
 
@@ -104,16 +136,21 @@ public class Main {
             System.out.println("3. Logout");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
+            scanner.nextLine();
 
             switch (choice) {
                 case 1:
-                    customer.bookTaxi();
+                	System.out.print("Enter the pickup location: ");
+                    String pickupLocation = scanner.nextLine();
+                    System.out.print("Enter the destination: ");
+                    String destination = scanner.nextLine();
+                    customer.bookTaxi(pickupLocation, destination);
                     break;
                 case 2:
                     customer.viewBookings();
                     break;
                 case 3:
-                    System.out.println("Logging out...");
+                    logger.info("Logging out...");
                     customer.setCurrentUser(null);
                     isRunning = false;
                     break;
@@ -144,7 +181,7 @@ public class Main {
                     admin.manageTaxis();
                     break;
                 case 3:
-                    System.out.println("Logging out...");
+                    logger.info("Logging out...");
                     isRunning = false;
                     break;
                 default:
